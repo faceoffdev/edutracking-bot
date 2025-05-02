@@ -8,6 +8,8 @@ import (
 )
 
 func handleStartCommand(c telebot.Context) error {
+	defer c.Respond()
+
 	memory.StartQuiz(c.Sender().ID, nil)
 
 	markup := &telebot.ReplyMarkup{}

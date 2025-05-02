@@ -20,7 +20,8 @@ type PostgresConfig struct {
 }
 
 type TelegramConfig struct {
-	Token string
+	Token     string
+	LogChatID int64
 }
 
 func Load() (*Config, error) {
@@ -33,7 +34,8 @@ func Load() (*Config, error) {
 
 	return &Config{
 		Telegram: TelegramConfig{
-			Token: viper.GetString("TELEGRAM_BOT_TOKEN"),
+			Token:     viper.GetString("TELEGRAM_BOT_TOKEN"),
+			LogChatID: viper.GetInt64("TELEGRAM_LOG_CHAT_ID"),
 		},
 		Postgres: PostgresConfig{
 			User:   viper.GetString("DB_USERNAME"),

@@ -35,6 +35,8 @@ func getTopicMessage(b *telebot.Bot) (string, *telebot.ReplyMarkup, error) {
 		}
 
 		b.Handle(&btn, func(c telebot.Context) error {
+			defer c.Respond()
+
 			topicID := c.Callback().Data
 			questions, err := db.GetQuestionsByTopic(topicID)
 			if err != nil || len(questions) == 0 {
