@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/faceoffdev/edutracking-bot/internal/config"
 	"github.com/faceoffdev/edutracking-bot/internal/memory"
+	"gopkg.in/telebot.v3/middleware"
 	"strings"
 	"time"
 
@@ -35,19 +36,19 @@ func (h *Bot) Run(cfg *config.Config) error {
 		return err
 	}
 
+	b.Use(middleware.AutoRespond())
+
 	b.Handle("/start", handleStartCommand)
 	//b.Handle(&formatBtn, func(c telebot.Context) error {
 	//	return c.Send("Формат ОГЭ в разработке :)")
 	//})
 	b.Handle(&topicsBtn, func(c telebot.Context) error {
-		defer c.Respond()
-
 		msg, markup, err := getTopicMessage(b)
 		if err != nil {
 			return err
 		}
 
-		return c.Send(msg, markup)
+		return c.EditOrSend(msg, &telebot.SendOptions{ParseMode: telebot.ModeHTML, ReplyMarkup: markup})
 	})
 	b.Handle(telebot.OnText, func(c telebot.Context) error {
 		userID := c.Sender().ID
@@ -59,17 +60,26 @@ func (h *Bot) Run(cfg *config.Config) error {
 		answer := c.Text()
 		correct, next := memory.SubmitAnswer(userID, answer)
 
-		if correct {
-			if next != nil {
-				return c.Send(fmt.Sprintf("✅ Верно!\n\n%s\n\nСлово: %s", next.Question, next.Word))
-			}
-			return c.Send("✅ Верно!\n\n🎉 Вы прошли все вопросы этой темы!")
-		} else {
-			msg := fmt.Sprintf("Пользователь %s ответил неверно на вопрос под номером %s\n\n%s\n\nОтвет: %s\nПравильный ответ: %s", getUserString(c.Sender()), curr.ID, curr.Question, answer, curr.Answer)
-			c.Bot().Send(telebot.ChatID(logChatId), msg)
+		var msg strings.Builder
 
-			return c.Send("❌ Неверно. Попробуйте ещё раз.")
+		if correct {
+			msg.WriteString("✅ Верно!")
+		} else {
+			msgLog := fmt.Sprintf("Пользователь %s ответил неверно на вопрос под номером %s\n\n%s\n\nОтвет: %s\nПравильный ответ: %s", getUserString(c.Sender()), curr.ID, curr.Question, answer, curr.Answer)
+			c.Bot().Send(telebot.ChatID(logChatId), msgLog)
+
+			msg.WriteString("❌ Неверно.")
 		}
+
+		if next != nil {
+			msg.WriteString(" Следующий вопрос:\n\n")
+			msg.WriteString("<i>" + next.Question + "</i>\n\n")
+			msg.WriteString("Слово: <b>" + next.Word + "</b>")
+		} else {
+			msg.WriteString(" Вы прошли все вопросы этой темы! 🎉")
+		}
+
+		return c.Send(msg.String(), &telebot.SendOptions{ParseMode: telebot.ModeHTML})
 	})
 
 	b.Start()

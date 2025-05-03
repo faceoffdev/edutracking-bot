@@ -18,7 +18,7 @@ func getTopicMessage(b *telebot.Bot) (string, *telebot.ReplyMarkup, error) {
 	var rows [][]telebot.InlineButton
 
 	var messageText strings.Builder
-	messageText.WriteString("Список доступных тем\n\n")
+	messageText.WriteString("<b>Список доступных тем</b>\n\n")
 
 	for i, topic := range topics {
 		messageText.WriteString(fmt.Sprintf("%s — %s\n", topic.ID, topic.Name))
@@ -35,8 +35,6 @@ func getTopicMessage(b *telebot.Bot) (string, *telebot.ReplyMarkup, error) {
 		}
 
 		b.Handle(&btn, func(c telebot.Context) error {
-			defer c.Respond()
-
 			topicID := c.Callback().Data
 			questions, err := db.GetQuestionsByTopic(topicID)
 			if err != nil || len(questions) == 0 {
@@ -46,7 +44,7 @@ func getTopicMessage(b *telebot.Bot) (string, *telebot.ReplyMarkup, error) {
 			memory.StartQuiz(c.Sender().ID, questions)
 
 			q := questions[0]
-			return c.Send(fmt.Sprintf("Прочитайте приведенный ниже текст. Преобразуйте слово, напечатанное заглавными буквами так, чтобы оно грамматически соответствовало содержанию текста. Заполните пропуск полученным словом.\n\n%s\n\nСлово: %s", q.Question, q.Word))
+			return c.Send(fmt.Sprintf("<b>Вопросы по теме %s</b>\nПрочитайте приведенный ниже текст. Преобразуйте слово, напечатанное заглавными буквами так, чтобы оно грамматически соответствовало содержанию текста. Заполните пропуск полученным словом.\n\n<i>%s</i>\n\nСлово: <b>%s</b>", topicID, q.Question, q.Word), &telebot.SendOptions{ParseMode: telebot.ModeHTML})
 		})
 	}
 
