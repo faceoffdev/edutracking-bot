@@ -72,11 +72,11 @@ func (h *Bot) Run(cfg *config.Config) error {
 		}
 
 		if next != nil {
-			msg.WriteString(" Следующий вопрос:\n\n")
+			msg.WriteString(" Следующий текст:\n\n")
 			msg.WriteString("<i>" + next.Question + "</i>\n\n")
 			msg.WriteString("Слово: <b>" + next.Word + "</b>")
 		} else {
-			msg.WriteString(" Вы прошли все вопросы этой темы! 🎉")
+			msg.WriteString(" Вы прошли все тексты этой темы! 🎉")
 		}
 
 		return c.Send(msg.String(), &telebot.SendOptions{ParseMode: telebot.ModeHTML})
